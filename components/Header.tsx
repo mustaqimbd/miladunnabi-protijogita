@@ -9,6 +9,7 @@ export default function Header() {
           alt="জাতীয় মিলাদুন্নবী অলিম্পিয়াড ২০২৬"
           fill
           priority
+          sizes="(max-width: 768px) 100vw, 800px"
           className="object-contain sm:object-cover"
         />
       </div>
