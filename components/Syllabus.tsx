@@ -1,0 +1,48 @@
+import { BookOpen, FileText, Download, Target } from "lucide-react";
+
+export default function Syllabus() {
+  return (
+    <div className="bg-gray-50 px-4 md:px-8 py-6 md:py-10 border-t border-gray-100">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-6 md:mb-8">
+          <h2 className="text-2xl md:text-3xl font-black text-gray-800 flex items-center justify-center gap-3">
+            <BookOpen className="w-6 h-6 md:w-8 md:h-8 text-green-600" />
+            প্রতিযোগিতার সিলেবাস ও নিয়মাবলী
+          </h2>
+          <p className="mt-2 text-sm md:text-base text-gray-600">যে বইটির উপর ভিত্তি করে অলিম্পিয়াড অনুষ্ঠিত হবে</p>
+        </div>
+
+        <div className="bg-white rounded-3xl p-5 md:p-8 shadow border border-green-100 relative overflow-hidden flex flex-col md:flex-row items-center gap-6 md:gap-8">
+          {/* Abstract Book Design */}
+          <div className="w-48 h-64 shrink-0 bg-gradient-to-br from-green-700 to-green-900 rounded-r-3xl rounded-l-md shadow-xl relative flex items-center justify-center transform -rotate-3 transition-transform hover:rotate-0">
+            <div className="absolute left-4 top-0 w-px h-full bg-black/20"></div>
+            <div className="text-center px-4">
+              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
+                <BookOpen className="w-6 h-6 text-white" />
+              </div>
+              <h3 className="text-white font-black text-xl leading-tight">ফিকহুস<br />সিরাহ</h3>
+              <p className="text-green-200 text-xs mt-2">(১ম খন্ড)</p>
+            </div>
+          </div>
+
+          <div className="flex-1 text-center md:text-left space-y-6">
+            <div>
+              <h3 className="text-lg md:text-2xl font-black text-gray-800 mb-2">অলিম্পিয়াডের জন্য “ফিকহুস সিরাহ” নির্ধারণ করা হয়েছে</h3>
+              <div className="space-y-1">
+                <p className="text-gray-600"><span className="font-bold text-gray-700">লেখক:</span> ড. সায়িদ রমাদান বুতী</p>
+                <p className="text-gray-600"><span className="font-bold text-gray-700">অনুবাদক:</span> ইবনু আরিফ</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-start gap-3 text-left">
+                <FileText className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
+                <p className="text-gray-700 text-sm md:text-base leading-relaxed">চিন্তার কিছু নেই সিলেবাসভুক্ত বইটির PDF রেজিস্ট্রেশন করা অংশগ্রহণকারীদের প্রদান করা হবে। তাই বই না থাকলেও আপনি প্রস্তুতি নিতে পারবেন।</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
