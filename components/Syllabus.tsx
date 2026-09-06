@@ -1,4 +1,5 @@
 import { BookOpen, FileText, Download, Target } from "lucide-react";
+import Image from "next/image";
 
 export default function Syllabus() {
   return (
@@ -13,16 +14,16 @@ export default function Syllabus() {
         </div>
 
         <div className="bg-white rounded-3xl p-5 md:p-8 shadow border border-green-100 relative overflow-hidden flex flex-col md:flex-row items-center gap-6 md:gap-8">
-          {/* Abstract Book Design */}
-          <div className="w-48 h-64 shrink-0 bg-gradient-to-br from-green-700 to-green-900 rounded-r-3xl rounded-l-md shadow-xl relative flex items-center justify-center transform -rotate-3 transition-transform hover:rotate-0">
-            <div className="absolute left-4 top-0 w-px h-full bg-black/20"></div>
-            <div className="text-center px-4">
-              <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
-                <BookOpen className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-white font-black text-xl leading-tight">ফিকহুস<br />সিরাহ</h3>
-              <p className="text-green-200 text-xs mt-2">(১ম খন্ড)</p>
-            </div>
+          {/* Book Image */}
+          <div className="w-48 h-64 shrink-0 relative rounded-r-xl rounded-l-sm shadow-xl overflow-hidden transform -rotate-3 transition-transform hover:rotate-0 border-l-4 border-gray-300 bg-gray-200">
+            <Image 
+              src="/book.jpeg" 
+              alt="ফিকহুস সিরাহ"
+              fill
+              className="object-cover"
+              sizes="192px"
+              priority
+            />
           </div>
 
           <div className="flex-1 text-center md:text-left space-y-6">
