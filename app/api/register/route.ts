@@ -94,7 +94,7 @@ export async function POST(request: Request) {
     );
   }
 
-  let body: unknown;
+  let body: any;
   try {
     body = await request.json();
   } catch {
@@ -104,7 +104,35 @@ export async function POST(request: Request) {
     );
   }
 
-  const payload = JSON.stringify(body);
+  const sheetPayload = {
+    "পূর্ণ নাম": body.fullName,
+    "লিঙ্গ": body.gender === 'male' ? 'পুরুষ' : body.gender === 'female' ? 'নারী' : 'অন্যান্য',
+    "মোবাইল নম্বর": body.phone,
+    "WhatsApp নম্বর": body.whatsapp,
+    "ইমেইল": body.email || "N/A",
+    "বিভাগ": body.division,
+    "জেলা": body.district,
+    "উপজেলা / থানা": body.upazila,
+    "ঠিকানা": body.currentAddress,
+    "অংশগ্রহণের গ্রুপ (পরিচয়)": body.identity === 'group1' ? 'ষষ্ঠ–দশম / শহরে বেকায়া / সমমান পর্যন্ত' : 
+                               body.identity === 'group2' ? 'একাদশ–দ্বাদশ / আলিম / হেদায়া সমমান পর্যন্ত' :
+                               body.identity === 'group3' ? 'ডিগ্রি / ফাজিল / অনার্স / কামিল / মাস্টার্স / দাওরায়ে হাদিস সমমান পর্যন্ত' :
+                               body.identity === 'group4' ? 'যেকোনো পেশাজীবী / অন্যান্য' : body.identity,
+    "পেশা": body.occupation === 'student' ? 'ছাত্র / ছাত্রী' : 
+            body.occupation === 'job' ? 'চাকরিজীবী' : 
+            body.occupation === 'business' ? 'ব্যবসায়ী' : 
+            body.occupation === 'housewife' ? 'গৃহিণী' : 
+            body.occupation === 'farmer' ? 'কৃষক' : 
+            body.occupation === 'other_occ' ? 'অন্যান্য' : body.occupation,
+    "শিক্ষাপ্রতিষ্ঠান / পেশার বিবরণ": body.institution || "N/A",
+    "পেমেন্ট মাধ্যম": body.paymentMethod === 'bkash' ? 'bKash' : body.paymentMethod === 'nagad' ? 'Nagad' : body.paymentMethod,
+    "সেন্ডার নম্বর": body.senderNumber,
+    "Transaction ID": body.transactionId || "N/A",
+    "Event ID": body.eventId || "N/A",
+    "Submission Time": new Date().toLocaleString('en-US', { timeZone: 'Asia/Dhaka' })
+  };
+
+  const payload = JSON.stringify(sheetPayload);
 
   try {
     // Google Apps Script returns a 302 redirect on the initial POST.
