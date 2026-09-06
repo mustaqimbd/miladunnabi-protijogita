@@ -1,12 +1,14 @@
 "use client";
 
 import { 
-  CreditCard, Send, CheckCircle, User, Phone, MapPin, Building, Hash, 
+  CreditCard, Send, User, Phone, MapPin, Building, Hash, 
   Mail, MessageCircle, Wallet, ClipboardCheck, GraduationCap, Map
 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm, SubmitHandler } from "react-hook-form";
 import BdAddress from "@/utilities/bdAddress/bdAddress";
+import { fbq } from "./FacebookPixel";
 
 type RegistrationFormInputs = {
   fullName: string;
@@ -19,6 +21,7 @@ type RegistrationFormInputs = {
   upazila: string;
   currentAddress: string;
   identity: string;
+  occupation: string;
   institution: string;
   paymentMethod: string;
   senderNumber: string;
@@ -41,9 +44,21 @@ const FormSection = ({ title, icon, children }: { title: string, icon: React.Rea
   </div>
 );
 
+// Reusable inline field error
+const FieldError = ({ message }: { message?: string }) =>
+  message ? (
+    <div className="flex items-center gap-1.5 mt-1.5 text-red-600">
+      <svg className="w-3.5 h-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+      </svg>
+      <p className="text-xs font-medium">{message}</p>
+    </div>
+  ) : null;
+
 export default function Registration() {
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
     register,
@@ -56,41 +71,72 @@ export default function Registration() {
 
   const selectedDivision = watch("division");
   const selectedDistrict = watch("district");
+  const selectedOccupation = watch("occupation");
 
   const divisions = BdAddress.divisions("bn");
   const districts = selectedDivision ? BdAddress.districts(selectedDivision, "bn") : [];
   const upazilas = selectedDistrict ? BdAddress.upazilas(selectedDistrict, "bn") : [];
 
-  const onSubmit: SubmitHandler<RegistrationFormInputs> = (data) => {
-    setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Form Data:", data);
-      setIsSubmitted(true);
-      setIsSubmitting(false);
-      reset();
-    }, 1500);
-  };
+  const institutionLabel =
+    selectedOccupation === "student" ? "শিক্ষাপ্রতিষ্ঠানের নাম" :
+    selectedOccupation === "job" ? "প্রতিষ্ঠান / কর্মক্ষেত্রের নাম" :
+    selectedOccupation === "business" ? "ব্যবসা প্রতিষ্ঠানের নাম / ধরন" :
+    selectedOccupation === "housewife" ? "ঠিকানা (ঐচ্ছিক)" :
+    selectedOccupation === "farmer" ? "জমির এলাকা / কৃষি ধরন (ঐচ্ছিক)" :
+    "শিক্ষাপ্রতিষ্ঠান / পেশার বিবরণ";
 
-  if (isSubmitted) {
-    return (
-      <div id="register" className="bg-[#f4f9f6] py-16 px-6 border-t border-green-100 min-h-[60vh] flex items-center justify-center">
-        <div className="bg-white rounded-3xl p-12 shadow-xl border border-green-200 text-center max-w-2xl w-full">
-          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-            <CheckCircle className="w-12 h-12 text-green-600" />
-          </div>
-          <h3 className="text-3xl font-black text-gray-800 mb-4">রেজিস্ট্রেশন সফল হয়েছে!</h3>
-          <p className="text-gray-600 text-lg mb-8">আমরা আপনার পেমেন্ট যাচাই করে কনফার্মেশন মেসেজ পাঠাবো। অলিম্পিয়াডের প্রস্তুতির জন্য শুভকামনা!</p>
-          <button 
-            onClick={() => setIsSubmitted(false)}
-            className="px-8 py-3 bg-[#0f5b3a] text-white font-bold rounded-xl hover:bg-green-800 transition-colors shadow-md"
-          >
-            নতুন রেজিস্ট্রেশন করুন
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const institutionPlaceholder =
+    selectedOccupation === "student" ? "যেমন: ঢাকা বিশ্ববিদ্যালয়, রাজশাহী কলেজ..." :
+    selectedOccupation === "job" ? "যেমন: বাংলাদেশ ব্যাংক, সরকারি প্রাথমিক বিদ্যালয়..." :
+    selectedOccupation === "business" ? "যেমন: কাপড়ের দোকান, মুদি ব্যবসা..." :
+    selectedOccupation === "housewife" ? "(পূরণ না করলেও চলবে)" :
+    selectedOccupation === "farmer" ? "যেমন: ধান চাষ, সবজি চাষ..." :
+    "শিক্ষাপ্রতিষ্ঠান / পেশার নাম লিখুন";
+
+  const onSubmit: SubmitHandler<RegistrationFormInputs> = async (data) => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    // Generate a unique event ID for Meta Pixel/CAPI deduplication
+    const eventId = "reg_" + Date.now() + "_" + Math.random().toString(36).substring(2, 9);
+
+    // Resolve IDs → Bangla names so Google Sheets receives readable text
+    const payload = {
+      ...data,
+      eventId, // Added for CAPI
+      division: BdAddress.divisionNameById(data.division, "bn").name,
+      district: BdAddress.districtNameById(data.district, "bn").name,
+      upazila:  BdAddress.upazilaNameById(data.upazila,  "bn").name,
+    };
+
+    try {
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Fire Meta Pixel event
+        fbq("track", "CompleteRegistration", {
+          content_name: "জাতীয় মিলাদুন্নবী অলিম্পিয়াড ২০২৬",
+          currency: "BDT",
+          value: 100.00,
+        }, { eventID: eventId });
+        
+        reset();
+        router.push("/success");
+      } else {
+        setSubmitError("রেজিস্ট্রেশন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।");
+      }
+    } catch {
+      setSubmitError("নেটওয়ার্ক সমস্যা। ইন্টারনেট সংযোগ যাচাই করে আবার চেষ্টা করুন।");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div id="register" className="bg-[#f4f9f6] py-6 md:py-8 px-4 sm:px-6 border-t border-green-100">
@@ -118,7 +164,7 @@ export default function Registration() {
                         className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.fullName ? 'border-red-400' : 'border-gray-300'}`} 
                       />
                     </div>
-                    {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName.message}</p>}
+                    <FieldError message={errors.fullName?.message} />
                   </div>
 
                   <div>
@@ -137,12 +183,12 @@ export default function Registration() {
                         <span className="text-gray-700">অন্যান্য</span>
                       </label>
                     </div>
-                    {errors.gender && <p className="text-red-500 text-xs mt-1">{errors.gender.message}</p>}
+                    <FieldError message={errors.gender?.message} />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label className="block text-sm font-bold text-gray-800 mb-2">Phone Number <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-bold text-gray-800 mb-2">Mobile Number <span className="text-red-500">*</span></label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <Phone className="h-5 w-5 text-gray-400" />
@@ -154,7 +200,7 @@ export default function Registration() {
                           className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.phone ? 'border-red-400' : 'border-gray-300'}`} 
                         />
                       </div>
-                      {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
+                      <FieldError message={errors.phone?.message} />
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-gray-800 mb-2">WhatsApp Number <span className="text-red-500">*</span></label>
@@ -169,7 +215,7 @@ export default function Registration() {
                           className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.whatsapp ? 'border-red-400' : 'border-gray-300'}`} 
                         />
                       </div>
-                      {errors.whatsapp && <p className="text-red-500 text-xs mt-1">{errors.whatsapp.message}</p>}
+                      <FieldError message={errors.whatsapp?.message} />
                     </div>
                   </div>
 
@@ -186,7 +232,7 @@ export default function Registration() {
                         className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.email ? 'border-red-400' : 'border-gray-300'}`} 
                       />
                     </div>
-                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+                    <FieldError message={errors.email?.message} />
                   </div>
                 </div>
               </FormSection>
@@ -213,7 +259,7 @@ export default function Registration() {
                           <option key={d.id} value={d.id}>{d.name}</option>
                         ))}
                       </select>
-                      {errors.division && <p className="text-red-500 text-xs mt-1">{errors.division.message}</p>}
+                      <FieldError message={errors.division?.message} />
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-gray-800 mb-2">জেলা <span className="text-red-500">*</span></label>
@@ -233,7 +279,7 @@ export default function Registration() {
                           <option key={d.id} value={d.id}>{d.name}</option>
                         ))}
                       </select>
-                      {errors.district && <p className="text-red-500 text-xs mt-1">{errors.district.message}</p>}
+                      <FieldError message={errors.district?.message} />
                     </div>
                   </div>
 
@@ -255,7 +301,7 @@ export default function Registration() {
                         ))}
                       </select>
                     </div>
-                    {errors.upazila && <p className="text-red-500 text-xs mt-1">{errors.upazila.message}</p>}
+                    <FieldError message={errors.upazila?.message} />
                   </div>
 
                   <div>
@@ -271,55 +317,90 @@ export default function Registration() {
                         className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.currentAddress ? 'border-red-400' : 'border-gray-300'}`} 
                       />
                     </div>
-                    {errors.currentAddress && <p className="text-red-500 text-xs mt-1">{errors.currentAddress.message}</p>}
+                    <FieldError message={errors.currentAddress?.message} />
                   </div>
                 </div>
               </FormSection>
 
-              {/* Section 3: Education */}
-              <FormSection title="৩. শিক্ষা / পেশাগত পরিচয়" icon={<GraduationCap className="w-6 h-6" />}>
+              {/* Section 3: Education & Occupation */}
+              <FormSection title="৩. শিক্ষা ও পেশা" icon={<GraduationCap className="w-6 h-6" />}>
                 <div className="space-y-5">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-800 mb-3">আপনার পরিচয় <span className="text-red-500">*</span></label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" value="6-10" {...register("identity", { required: "পরিচয় সিলেক্ট করুন" })} className="w-4 h-4 text-[#0f5b3a] focus:ring-[#0f5b3a]" />
-                        <span className="text-gray-700">ষষ্ঠ-দশম শ্রেণি</span>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-800 mb-2">
+                        শিক্ষাগত যোগ্যতা <span className="text-red-500">*</span>
                       </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" value="11-12" {...register("identity", { required: "পরিচয় সিলেক্ট করুন" })} className="w-4 h-4 text-[#0f5b3a] focus:ring-[#0f5b3a]" />
-                        <span className="text-gray-700">একাদশ - দ্বাদশ শ্রেণি</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" value="university" {...register("identity", { required: "পরিচয় সিলেক্ট করুন" })} className="w-4 h-4 text-[#0f5b3a] focus:ring-[#0f5b3a]" />
-                        <span className="text-gray-700">ডিগ্রি / ফাজিল / অনার্স / কামিল / মাস্টার্স</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" value="other" {...register("identity", { required: "পরিচয় সিলেক্ট করুন" })} className="w-4 h-4 text-[#0f5b3a] focus:ring-[#0f5b3a]" />
-                        <span className="text-gray-700">অন্যান্য</span>
-                      </label>
+                      <select
+                        {...register("identity", { required: "শিক্ষাগত যোগ্যতা সিলেক্ট করুন" })}
+                        defaultValue=""
+                        className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.identity ? "border-red-400" : "border-gray-300"}`}
+                      >
+                        <option value="" disabled>বেছে নিন</option>
+                        <option value="primary">পঞ্চম শ্রেণি পর্যন্ত</option>
+                        <option value="ssc">SSC / দাখিল / সমমান</option>
+                        <option value="hsc">HSC / আলিম / ডিপ্লোমা</option>
+                        <option value="degree">ডিগ্রি / ফাজিল / অনার্স</option>
+                        <option value="masters">মাস্টার্স / কামিল ও উপরে</option>
+                        <option value="hafez">হাফেজ (কুরআনুল করিম)</option>
+                        <option value="other_edu">অন্যান্য</option>
+                      </select>
+                      <FieldError message={errors.identity?.message} />
                     </div>
-                    {errors.identity && <p className="text-red-500 text-xs mt-1">{errors.identity.message}</p>}
+
+                    <div>
+                      <label className="block text-sm font-bold text-gray-800 mb-2">
+                        পেশা <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        {...register("occupation", { required: "পেশা সিলেক্ট করুন" })}
+                        defaultValue=""
+                        className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.occupation ? "border-red-400" : "border-gray-300"}`}
+                      >
+                        <option value="" disabled>বেছে নিন</option>
+                        <option value="student">ছাত্র / ছাত্রী</option>
+                        <option value="job">চাকরিজীবী</option>
+                        <option value="business">ব্যবসায়ী</option>
+                        <option value="housewife">গৃহিণী</option>
+                        <option value="farmer">কৃষক</option>
+                        <option value="other_occ">অন্যান্য</option>
+                      </select>
+                      <FieldError message={errors.occupation?.message} />
+                    </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-gray-800 mb-2">শিক্ষাপ্রতিষ্ঠান / পেশার নাম <span className="text-red-500">*</span></label>
+                    <label className="block text-sm font-bold text-gray-800 mb-2">
+                      {institutionLabel}
+                      {selectedOccupation !== "housewife" && selectedOccupation !== "farmer" && (
+                        <span className="text-red-500"> *</span>
+                      )}
+                    </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Building className="h-5 w-5 text-gray-400" />
                       </div>
-                      <input 
-                        {...register("institution", { required: "শিক্ষাপ্রতিষ্ঠান / পেশার নাম লিখুন" })} 
-                        type="text" 
-                        placeholder="শিক্ষাপ্রতিষ্ঠান / পেশার নাম লিখুন" 
-                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.institution ? 'border-red-400' : 'border-gray-300'}`} 
+                      <input
+                        {...register("institution", {
+                          required:
+                            selectedOccupation === "housewife" || selectedOccupation === "farmer"
+                              ? false
+                              : "এই তথ্যটি দেওয়া আবশ্যক",
+                        })}
+                        type="text"
+                        placeholder={institutionPlaceholder}
+                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${
+                          errors.institution ? "border-red-400" : "border-gray-300"
+                        }`}
                       />
                     </div>
-                    {errors.institution && <p className="text-red-500 text-xs mt-1">{errors.institution.message}</p>}
+                    <FieldError message={errors.institution?.message} />
                   </div>
+
                 </div>
               </FormSection>
             </div>
+
 
             {/* Right Column */}
             <div className="w-full lg:w-[450px]">
@@ -367,7 +448,7 @@ export default function Registration() {
                       <span className="text-gray-700 font-medium">Nagad</span>
                     </label>
                   </div>
-                  {errors.paymentMethod && <p className="text-red-500 text-xs mt-[-10px]">{errors.paymentMethod.message}</p>}
+                  <FieldError message={errors.paymentMethod?.message} />
 
                   <div>
                     <label className="block text-sm font-bold text-gray-800 mb-2">যে মোবাইল নম্বর থেকে টাকা পাঠিয়েছেন <span className="text-red-500">*</span></label>
@@ -382,7 +463,7 @@ export default function Registration() {
                         className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.senderNumber ? 'border-red-400' : 'border-gray-300'}`} 
                       />
                     </div>
-                    {errors.senderNumber && <p className="text-red-500 text-xs mt-1">{errors.senderNumber.message}</p>}
+                    <FieldError message={errors.senderNumber?.message} />
                   </div>
 
                   <div>
@@ -438,6 +519,14 @@ export default function Registration() {
               </p>
             </div>
           </div>
+
+          {/* Error Message */}
+          {submitError && (
+            <div className="bg-red-50 border border-red-300 text-red-700 rounded-xl px-5 py-4 text-sm font-medium flex items-center gap-3">
+              <span className="text-red-500 text-lg">⚠️</span>
+              {submitError}
+            </div>
+          )}
 
           {/* Submit Button */}
           <button 
