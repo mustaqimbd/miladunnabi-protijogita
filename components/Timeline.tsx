@@ -21,7 +21,7 @@ export default function Timeline() {
             <div className="flex-1 text-center opacity-0">.</div>
             <div className="flex-1 text-center">
               <div className="text-sm font-bold text-green-600 mb-1 uppercase tracking-wider">গ্র্যান্ড ফাইনাল: অফলাইন</div>
-              <div className="text-xl font-black text-gray-800">১০ অক্টোবর ২০২৬</div>
+              <div className="text-xl font-black text-gray-800">৩১ অক্টোবর ২০২৬</div>
             </div>
           </div>
 
@@ -53,8 +53,8 @@ export default function Timeline() {
             <div className="flex-1 text-center opacity-0">.</div>
             <div className="flex-1 text-center">
               <div className="text-sm font-bold text-yellow-600 mb-1 uppercase tracking-wider">প্রথম রাউন্ড: অনলাইন</div>
-              <div className="text-xl font-black text-gray-800 mb-1">৩ অক্টোবর ২০২৬</div>
-              <div className="text-xs font-medium text-gray-500">৫০টি MCQ | ৩০ মিনিট</div>
+              <div className="text-xl font-black text-gray-800 mb-1">১৬ অক্টোবর ২০২৬</div>
+              <div className="text-xs font-medium text-gray-500">৫০টি MCQ | ৪০ মিনিট</div>
             </div>
             <div className="flex-1 text-center opacity-0">.</div>
           </div>
@@ -79,8 +79,8 @@ export default function Timeline() {
             </div>
             <div className="pt-1">
               <div className="text-sm font-bold text-yellow-600 mb-1 uppercase tracking-wider">প্রথম রাউন্ড: অনলাইন</div>
-              <div className="text-lg font-black text-gray-800 mb-1">৩ অক্টোবর ২০২৬</div>
-              <div className="text-xs font-medium text-gray-500">৫০টি MCQ | ৩০ মিনিট</div>
+              <div className="text-lg font-black text-gray-800 mb-1">১৬ অক্টোবর ২০২৬</div>
+              <div className="text-xs font-medium text-gray-500">৫০টি MCQ | ৪০ মিনিট</div>
             </div>
           </div>
 
@@ -90,7 +90,7 @@ export default function Timeline() {
             </div>
             <div className="pt-1">
               <div className="text-sm font-bold text-green-600 mb-1 uppercase tracking-wider">গ্র্যান্ড ফাইনাল: অফলাইন</div>
-              <div className="text-lg font-black text-gray-800">১০ অক্টোবর ২০২৬</div>
+              <div className="text-lg font-black text-gray-800">৩১ অক্টোবর ২০২৬</div>
             </div>
           </div>
           

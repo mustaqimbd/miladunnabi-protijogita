@@ -35,6 +35,13 @@ export default function Footer() {
         <p className="text-sm md:text-lg font-medium text-[#0f5b3a]/90">
           কেন্দ্রীয় কার্যালয় :- সোনাকান্দা দারুল হুদা দরবার শরীফ, মুরাদনগর, কুমিল্লা।
         </p>
+        <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-6 mt-2 text-[#0f5b3a]/90 font-medium">
+          <p>যোগাযোগ ও WhatsApp:-</p>
+          <div className="flex gap-4">
+            <span>+880 1323-975927</span>
+            <span>+880 1788-763747</span>
+          </div>
+        </div>
         
       </div>
     </footer>

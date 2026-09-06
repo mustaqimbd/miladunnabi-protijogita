@@ -1,4 +1,3 @@
-import type Metadata from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -14,6 +13,7 @@ const geistMono = Geist_Mono({
 
 import { Suspense } from "react";
 import FacebookPixel from "@/components/FacebookPixel";
+import { Metadata } from "next/types";
 
 export const metadata: Metadata = {
   title: "রেজিস্ট্রেশন | মিলাদুন্নবী প্রতিযোগিতা",

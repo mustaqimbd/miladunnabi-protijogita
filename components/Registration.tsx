@@ -2,7 +2,7 @@
 
 import { 
   CreditCard, Send, User, Phone, MapPin, Building, Hash, 
-  Mail, MessageCircle, Wallet, ClipboardCheck, GraduationCap, Map
+  Mail, MessageCircle, Wallet, ClipboardCheck, GraduationCap, Map, CheckCircle2
 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -26,9 +26,7 @@ type RegistrationFormInputs = {
   paymentMethod: string;
   senderNumber: string;
   transactionId: string;
-  agreeInfoCorrect: boolean;
-  agreeRules: boolean;
-  agreeCancelation: boolean;
+  agreeAll: boolean;
 };
 
 // Reusable Section Wrapper
@@ -329,21 +327,18 @@ export default function Registration() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                       <label className="block text-sm font-bold text-gray-800 mb-2">
-                        শিক্ষাগত যোগ্যতা <span className="text-red-500">*</span>
+                        শিক্ষাগত/পেশাগত পরিচয় <span className="text-red-500">*</span>
                       </label>
                       <select
-                        {...register("identity", { required: "শিক্ষাগত যোগ্যতা সিলেক্ট করুন" })}
+                        {...register("identity", { required: "আপনার পরিচয় নির্বাচন করুন" })}
                         defaultValue=""
                         className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.identity ? "border-red-400" : "border-gray-300"}`}
                       >
-                        <option value="" disabled>বেছে নিন</option>
-                        <option value="primary">পঞ্চম শ্রেণি পর্যন্ত</option>
-                        <option value="ssc">SSC / দাখিল / সমমান</option>
-                        <option value="hsc">HSC / আলিম / ডিপ্লোমা</option>
-                        <option value="degree">ডিগ্রি / ফাজিল / অনার্স</option>
-                        <option value="masters">মাস্টার্স / কামিল ও উপরে</option>
-                        <option value="hafez">হাফেজ (কুরআনুল করিম)</option>
-                        <option value="other_edu">অন্যান্য</option>
+                        <option value="" disabled>আপনার পরিচয় নির্বাচন করুন—</option>
+                        <option value="group1">ষষ্ঠ–দশম / শহরে বেকায়া / সমমান পর্যন্ত</option>
+                        <option value="group2">একাদশ–দ্বাদশ / আলিম / হেদায়া সমমান পর্যন্ত</option>
+                        <option value="group3">ডিগ্রি / ফাজিল / অনার্স / কামিল / মাস্টার্স / দাওরায়ে হাদিস সমমান পর্যন্ত</option>
+                        <option value="group4">যেকোনো পেশাজীবী / অন্যান্য</option>
                       </select>
                       <FieldError message={errors.identity?.message} />
                     </div>
@@ -489,19 +484,29 @@ export default function Registration() {
                   <ClipboardCheck className="w-5 h-5 text-yellow-800" />
                   <h3 className="font-bold text-lg text-yellow-900">শর্তাবলি</h3>
                 </div>
-                <div className="p-5 space-y-4">
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <input type="checkbox" {...register("agreeInfoCorrect", { required: true })} className="mt-1 w-4 h-4 text-[#0f5b3a] rounded border-gray-300 focus:ring-[#0f5b3a]" />
-                    <span className={`text-sm ${errors.agreeInfoCorrect ? 'text-red-500 font-bold' : 'text-gray-700'}`}>আমি নিশ্চিত করছি যে প্রদত্ত তথ্য সঠিক।</span>
-                  </label>
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <input type="checkbox" {...register("agreeRules", { required: true })} className="mt-1 w-4 h-4 text-[#0f5b3a] rounded border-gray-300 focus:ring-[#0f5b3a]" />
-                    <span className={`text-sm ${errors.agreeRules ? 'text-red-500 font-bold' : 'text-gray-700'}`}>আমি প্রতিযোগিতার সকল নিয়ম মেনে চলব।</span>
-                  </label>
-                  <label className="flex items-start gap-3 cursor-pointer group">
-                    <input type="checkbox" {...register("agreeCancelation", { required: true })} className="mt-1 w-4 h-4 text-[#0f5b3a] rounded border-gray-300 focus:ring-[#0f5b3a]" />
-                    <span className={`text-sm ${errors.agreeCancelation ? 'text-red-500 font-bold' : 'text-gray-700'}`}>ভুল তথ্য দিয়ে রেজিস্ট্রেশন করলে কর্তৃপক্ষ রেজিস্ট্রেশন বাতিল করতে পারবে।</span>
-                  </label>
+                <div className="p-5">
+                  <div className="space-y-4 mb-5">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+                      <span className="text-gray-700 text-sm">আমি নিশ্চিত করছি যে প্রদত্ত তথ্য সঠিক।</span>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+                      <span className="text-gray-700 text-sm">আমি প্রতিযোগিতার সকল নিয়ম মেনে চলব।</span>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+                      <span className="text-gray-700 text-sm">ভুল তথ্য বা একাধিক রেজিস্ট্রেশনের ক্ষেত্রে আয়োজক কর্তৃপক্ষ রেজিস্ট্রেশন বাতিল করতে পারবে।</span>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4 border-t border-yellow-200">
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <input type="checkbox" {...register("agreeAll", { required: "শর্তাবলিতে সম্মতি প্রদান করুন" })} className="mt-1 w-4 h-4 text-[#0f5b3a] rounded border-gray-300 focus:ring-[#0f5b3a]" />
+                      <span className="text-sm font-bold text-gray-800">আমি উপরোক্ত শর্তাবলি পড়েছি এবং একমত পোষণ করছি।</span>
+                    </label>
+                    <FieldError message={errors.agreeAll?.message} />
+                  </div>
                 </div>
               </div>
             </div>
