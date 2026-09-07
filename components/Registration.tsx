@@ -549,7 +549,6 @@ export default function Registration() {
             )}
           </button>
         </form>
-
       </div>
     </div>
   );
