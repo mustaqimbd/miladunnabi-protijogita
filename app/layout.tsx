@@ -11,9 +11,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-import { Suspense } from "react";
-import FacebookPixel from "@/components/FacebookPixel";
 import { Metadata } from "next/types";
+import InitGTM from "@/tracking/init/InitGTM";
+import PageTracking from "@/tracking/init/PageTracking";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "রেজিস্ট্রেশন | মিলাদুন্নবী প্রতিযোগিতা",
@@ -27,8 +28,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <InitGTM />
         <Suspense fallback={null}>
-          <FacebookPixel />
+          <PageTracking />
         </Suspense>
         {children}
       </body>

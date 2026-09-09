@@ -1,14 +1,15 @@
 "use client";
 
-import { 
-  CreditCard, Send, User, Phone, MapPin, Building, Hash, 
+import {
+  CreditCard, Send, User, Phone, MapPin, Building, Hash,
   Mail, MessageCircle, Wallet, ClipboardCheck, GraduationCap, Map, CheckCircle2
 } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, SubmitHandler } from "react-hook-form";
 import BdAddress from "@/utilities/bdAddress/bdAddress";
-import { fbq } from "./FacebookPixel";
+import eventHandler from "@/tracking/eventHandler";
+import { generateEventId } from "@/tracking/event.helpers";
 
 type RegistrationFormInputs = {
   fullName: string;
@@ -57,6 +58,7 @@ export default function Registration() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [hasFiredLead, setHasFiredLead] = useState(false);
 
   const {
     register,
@@ -75,28 +77,46 @@ export default function Registration() {
   const districts = selectedDivision ? BdAddress.districts(selectedDivision, "bn") : [];
   const upazilas = selectedDistrict ? BdAddress.upazilas(selectedDistrict, "bn") : [];
 
+  const checkAndFireLead = () => {
+    if (hasFiredLead) return;
+    const { fullName, gender, phone, whatsapp, email } = watch();
+    if (fullName && gender && phone && whatsapp && phone.length >= 11) {
+      setHasFiredLead(true);
+      const eventId = generateEventId("lead");
+      eventHandler({
+        event_name: "lead",
+        content_name: "জাতীয় মিলাদুন্নবী অলিম্পিয়াড ২০২৬",
+        event_id: eventId,
+        fullName,
+        ge: gender,
+        ph: phone,
+        em: email,
+      });
+    }
+  };
+
   const institutionLabel =
     selectedOccupation === "student" ? "শিক্ষাপ্রতিষ্ঠানের নাম" :
-    selectedOccupation === "job" ? "প্রতিষ্ঠান / কর্মক্ষেত্রের নাম" :
-    selectedOccupation === "business" ? "ব্যবসা প্রতিষ্ঠানের নাম / ধরন" :
-    selectedOccupation === "housewife" ? "ঠিকানা (ঐচ্ছিক)" :
-    selectedOccupation === "farmer" ? "জমির এলাকা / কৃষি ধরন (ঐচ্ছিক)" :
-    "শিক্ষাপ্রতিষ্ঠান / পেশার বিবরণ";
+      selectedOccupation === "job" ? "প্রতিষ্ঠান / কর্মক্ষেত্রের নাম" :
+        selectedOccupation === "business" ? "ব্যবসা প্রতিষ্ঠানের নাম / ধরন" :
+          selectedOccupation === "housewife" ? "ঠিকানা (ঐচ্ছিক)" :
+            selectedOccupation === "farmer" ? "জমির এলাকা / কৃষি ধরন (ঐচ্ছিক)" :
+              "শিক্ষাপ্রতিষ্ঠান / পেশার বিবরণ";
 
   const institutionPlaceholder =
     selectedOccupation === "student" ? "যেমন: ঢাকা বিশ্ববিদ্যালয়, রাজশাহী কলেজ..." :
-    selectedOccupation === "job" ? "যেমন: বাংলাদেশ ব্যাংক, সরকারি প্রাথমিক বিদ্যালয়..." :
-    selectedOccupation === "business" ? "যেমন: কাপড়ের দোকান, মুদি ব্যবসা..." :
-    selectedOccupation === "housewife" ? "(পূরণ না করলেও চলবে)" :
-    selectedOccupation === "farmer" ? "যেমন: ধান চাষ, সবজি চাষ..." :
-    "শিক্ষাপ্রতিষ্ঠান / পেশার নাম লিখুন";
+      selectedOccupation === "job" ? "যেমন: বাংলাদেশ ব্যাংক, সরকারি প্রাথমিক বিদ্যালয়..." :
+        selectedOccupation === "business" ? "যেমন: কাপড়ের দোকান, মুদি ব্যবসা..." :
+          selectedOccupation === "housewife" ? "(পূরণ না করলেও চলবে)" :
+            selectedOccupation === "farmer" ? "যেমন: ধান চাষ, সবজি চাষ..." :
+              "শিক্ষাপ্রতিষ্ঠান / পেশার নাম লিখুন";
 
   const onSubmit: SubmitHandler<RegistrationFormInputs> = async (data) => {
     setIsSubmitting(true);
     setSubmitError(null);
 
     // Generate a unique event ID for Meta Pixel/CAPI deduplication
-    const eventId = "reg_" + Date.now() + "_" + Math.random().toString(36).substring(2, 9);
+    const eventId = generateEventId("reg");
 
     // Resolve IDs → Bangla names so Google Sheets receives readable text
     const payload = {
@@ -104,7 +124,7 @@ export default function Registration() {
       eventId, // Added for CAPI
       division: BdAddress.divisionNameById(data.division, "bn").name,
       district: BdAddress.districtNameById(data.district, "bn").name,
-      upazila:  BdAddress.upazilaNameById(data.upazila,  "bn").name,
+      upazila: BdAddress.upazilaNameById(data.upazila, "bn").name,
     };
 
     try {
@@ -117,13 +137,20 @@ export default function Registration() {
       const result = await response.json();
 
       if (result.success) {
-        // Fire Meta Pixel event
-        fbq("track", "CompleteRegistration", {
+        // Fire GTM event for registration using centralized handler
+        eventHandler({
+          event_name: "complete_registration",
           content_name: "জাতীয় মিলাদুন্নবী অলিম্পিয়াড ২০২৬",
           currency: "BDT",
           value: 100.00,
-        }, { eventID: eventId });
-        
+          event_id: eventId,
+          fullName: data.fullName,
+          ge: data.gender,
+          ph: data.phone,
+          em: data.email,
+          upazila_id: data.upazila
+        });
+
         reset();
         router.push("/success");
       } else {
@@ -139,27 +166,27 @@ export default function Registration() {
   return (
     <div id="register" className="bg-[#f4f9f6] py-6 md:py-8 px-4 sm:px-6 border-t border-green-100">
       <div className="max-w-6xl mx-auto">
-        
+
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 md:gap-6">
           <div className="flex flex-col lg:flex-row gap-4 md:gap-6 items-start">
-            
+
             {/* Left Column */}
             <div className="flex-1 w-full">
-              
+
               {/* Section 1: Personal Info */}
               <FormSection title="১. ব্যক্তিগত তথ্য" icon={<User className="w-6 h-6" />}>
-                <div className="space-y-5">
+                <div className="space-y-5" onBlur={checkAndFireLead}>
                   <div>
                     <label className="block text-sm font-bold text-gray-800 mb-2">পূর্ণ নাম <span className="text-red-500">*</span></label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <User className="h-5 w-5 text-gray-400" />
                       </div>
-                      <input 
-                        {...register("fullName", { required: "পূর্ণ নাম লিখুন" })} 
-                        type="text" 
-                        placeholder="আপনার পূর্ণ নাম লিখুন" 
-                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.fullName ? 'border-red-400' : 'border-gray-300'}`} 
+                      <input
+                        {...register("fullName", { required: "পূর্ণ নাম লিখুন" })}
+                        type="text"
+                        placeholder="আপনার পূর্ণ নাম লিখুন"
+                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.fullName ? 'border-red-400' : 'border-gray-300'}`}
                       />
                     </div>
                     <FieldError message={errors.fullName?.message} />
@@ -191,11 +218,11 @@ export default function Registration() {
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <Phone className="h-5 w-5 text-gray-400" />
                         </div>
-                        <input 
-                          {...register("phone", { required: "ফোন নম্বর লিখুন" })} 
-                          type="tel" 
-                          placeholder="01XXXXXXXXX" 
-                          className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.phone ? 'border-red-400' : 'border-gray-300'}`} 
+                        <input
+                          {...register("phone", { required: "ফোন নম্বর লিখুন" })}
+                          type="tel"
+                          placeholder="01XXXXXXXXX"
+                          className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.phone ? 'border-red-400' : 'border-gray-300'}`}
                         />
                       </div>
                       <FieldError message={errors.phone?.message} />
@@ -206,11 +233,11 @@ export default function Registration() {
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <MessageCircle className="h-5 w-5 text-green-500" />
                         </div>
-                        <input 
-                          {...register("whatsapp", { required: "WhatsApp নম্বর লিখুন" })} 
-                          type="tel" 
-                          placeholder="01XXXXXXXXX" 
-                          className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.whatsapp ? 'border-red-400' : 'border-gray-300'}`} 
+                        <input
+                          {...register("whatsapp", { required: "WhatsApp নম্বর লিখুন" })}
+                          type="tel"
+                          placeholder="01XXXXXXXXX"
+                          className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.whatsapp ? 'border-red-400' : 'border-gray-300'}`}
                         />
                       </div>
                       <FieldError message={errors.whatsapp?.message} />
@@ -223,11 +250,11 @@ export default function Registration() {
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Mail className="h-5 w-5 text-gray-400" />
                       </div>
-                      <input 
-                        {...register("email", { pattern: { value: /\S+@\S+\.\S+/, message: "সঠিক ইমেইল দিন" } })} 
-                        type="email" 
-                        placeholder="example@mail.com" 
-                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.email ? 'border-red-400' : 'border-gray-300'}`} 
+                      <input
+                        {...register("email", { pattern: { value: /\S+@\S+\.\S+/, message: "সঠিক ইমেইল দিন" } })}
+                        type="email"
+                        placeholder="example@mail.com"
+                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.email ? 'border-red-400' : 'border-gray-300'}`}
                       />
                     </div>
                     <FieldError message={errors.email?.message} />
@@ -241,15 +268,15 @@ export default function Registration() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                       <label className="block text-sm font-bold text-gray-800 mb-2">বিভাগ <span className="text-red-500">*</span></label>
-                      <select 
-                        {...register("division", { 
+                      <select
+                        {...register("division", {
                           required: "বিভাগ সিলেক্ট করুন",
                           onChange: (e) => {
                             setValue("district", "");
                             setValue("upazila", "");
                           }
-                        })} 
-                        defaultValue="" 
+                        })}
+                        defaultValue=""
                         className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.division ? 'border-red-400' : 'border-gray-300'}`}
                       >
                         <option value="" disabled>বিভাগ সিলেক্ট করুন</option>
@@ -261,14 +288,14 @@ export default function Registration() {
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-gray-800 mb-2">জেলা <span className="text-red-500">*</span></label>
-                      <select 
-                        {...register("district", { 
+                      <select
+                        {...register("district", {
                           required: "জেলা সিলেক্ট করুন",
                           onChange: (e) => {
                             setValue("upazila", "");
                           }
-                        })} 
-                        defaultValue="" 
+                        })}
+                        defaultValue=""
                         disabled={!selectedDivision}
                         className={`w-full px-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 disabled:bg-gray-50 disabled:text-gray-400 ${errors.district ? 'border-red-400' : 'border-gray-300'}`}
                       >
@@ -287,9 +314,9 @@ export default function Registration() {
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Map className="h-5 w-5 text-gray-400" />
                       </div>
-                      <select 
-                        {...register("upazila", { required: "উপজেলা / থানা সিলেক্ট করুন" })} 
-                        defaultValue="" 
+                      <select
+                        {...register("upazila", { required: "উপজেলা / থানা সিলেক্ট করুন" })}
+                        defaultValue=""
                         disabled={!selectedDistrict}
                         className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 disabled:bg-gray-50 disabled:text-gray-400 ${errors.upazila ? 'border-red-400' : 'border-gray-300'}`}
                       >
@@ -308,11 +335,11 @@ export default function Registration() {
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <MapPin className="h-5 w-5 text-gray-400" />
                       </div>
-                      <input 
-                        {...register("currentAddress", { required: "ঠিকানা লিখুন" })} 
-                        type="text" 
-                        placeholder="গ্রাম/এলাকা/বাসা নম্বর/রাস্তা..." 
-                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.currentAddress ? 'border-red-400' : 'border-gray-300'}`} 
+                      <input
+                        {...register("currentAddress", { required: "ঠিকানা লিখুন" })}
+                        type="text"
+                        placeholder="গ্রাম/এলাকা/বাসা নম্বর/রাস্তা..."
+                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.currentAddress ? 'border-red-400' : 'border-gray-300'}`}
                       />
                     </div>
                     <FieldError message={errors.currentAddress?.message} />
@@ -384,9 +411,8 @@ export default function Registration() {
                         })}
                         type="text"
                         placeholder={institutionPlaceholder}
-                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${
-                          errors.institution ? "border-red-400" : "border-gray-300"
-                        }`}
+                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.institution ? "border-red-400" : "border-gray-300"
+                          }`}
                       />
                     </div>
                     <FieldError message={errors.institution?.message} />
@@ -399,7 +425,7 @@ export default function Registration() {
 
             {/* Right Column */}
             <div className="w-full lg:w-[450px]">
-              
+
               {/* Fee Card */}
               <div className="bg-[#f0f9f4] rounded-xl overflow-hidden mb-6 border border-green-200">
                 <div className="bg-[#0f5b3a] text-white px-5 py-3 flex items-center gap-3">
@@ -411,7 +437,7 @@ export default function Registration() {
                     <span className="skew-x-6 block">৳১০০</span>
                   </div>
                   <p className="font-bold text-gray-800 mb-4">bKash/Nagad-এ ৳১০০ Send Money করুন।</p>
-                  
+
                   <div className="flex gap-4 mb-4">
                     <div className="flex-1 bg-pink-600 text-white rounded-lg p-3 relative overflow-hidden group">
                       <div className="font-bold text-xl drop-shadow-sm mb-1">bKash</div>
@@ -422,7 +448,7 @@ export default function Registration() {
                       <div className="font-bold text-sm tracking-wide">+880 1616-125201</div>
                     </div>
                   </div>
-                  
+
                   <p className="text-sm text-[#0f5b3a] font-medium flex items-center justify-center gap-1">
                     <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[10px] font-bold">i</span>
                     পেমেন্ট করার পর Transaction ID প্রদান করুন।
@@ -451,11 +477,11 @@ export default function Registration() {
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Phone className="h-5 w-5 text-gray-400" />
                       </div>
-                      <input 
-                        {...register("senderNumber", { required: "সেন্ডার নম্বর লিখুন" })} 
-                        type="tel" 
-                        placeholder="01XXXXXXXXX" 
-                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.senderNumber ? 'border-red-400' : 'border-gray-300'}`} 
+                      <input
+                        {...register("senderNumber", { required: "সেন্ডার নম্বর লিখুন" })}
+                        type="tel"
+                        placeholder="01XXXXXXXXX"
+                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.senderNumber ? 'border-red-400' : 'border-gray-300'}`}
                       />
                     </div>
                     <FieldError message={errors.senderNumber?.message} />
@@ -467,11 +493,11 @@ export default function Registration() {
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Hash className="h-5 w-5 text-gray-400" />
                       </div>
-                      <input 
-                        {...register("transactionId")} 
-                        type="text" 
-                        placeholder="Transaction ID লিখুন" 
-                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 font-mono uppercase border-gray-300`} 
+                      <input
+                        {...register("transactionId")}
+                        type="text"
+                        placeholder="Transaction ID লিখুন"
+                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 font-mono uppercase border-gray-300`}
                       />
                     </div>
                   </div>
@@ -499,7 +525,7 @@ export default function Registration() {
                       <span className="text-gray-700 text-sm">ভুল তথ্য বা একাধিক রেজিস্ট্রেশনের ক্ষেত্রে আয়োজক কর্তৃপক্ষ রেজিস্ট্রেশন বাতিল করতে পারবে।</span>
                     </div>
                   </div>
-                  
+
                   <div className="pt-4 border-t border-yellow-200">
                     <label className="flex items-start gap-3 cursor-pointer group">
                       <input type="checkbox" {...register("agreeAll", { required: "শর্তাবলিতে সম্মতি প্রদান করুন" })} className="mt-1 w-4 h-4 text-[#0f5b3a] rounded border-gray-300 focus:ring-[#0f5b3a]" />
@@ -534,8 +560,8 @@ export default function Registration() {
           )}
 
           {/* Submit Button */}
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={isSubmitting}
             className="w-full mt-2 bg-[#0f5b3a] hover:bg-green-800 text-white font-bold py-4 rounded-xl shadow-lg transform transition-all flex items-center justify-center gap-2 text-xl disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed"
           >
