@@ -19,6 +19,11 @@ import { Suspense } from "react";
 export const metadata: Metadata = {
   title: "রেজিস্ট্রেশন | মিলাদুন্নবী প্রতিযোগিতা",
   description: "বাংলাদেশ ইসলামি ছাত্র কাফেলা আয়োজিত জাতীয় মিলাদুন্নবী অলিম্পিয়াড ২০২৬",
+  verification: {
+    other: {
+      "facebook-domain-verification": ["eina0u37k2khcf924ea4f97i6tjvvn"],
+    },
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
