@@ -135,34 +135,15 @@ export async function POST(request: Request) {
   const payload = JSON.stringify(sheetPayload);
 
   try {
-    // Google Apps Script returns a 302 redirect on the initial POST.
-    // If we follow it automatically, Node.js converts the method to GET,
-    // which skips doPost() entirely and returns an HTML error page.
-    // Fix: intercept the redirect and re-POST to the resolved URL manually.
-    const firstResponse = await fetch(scriptUrl, {
+    const response = await fetch(scriptUrl, {
       method: "POST",
       headers: { "Content-Type": "text/plain" },
       body: payload,
-      redirect: "manual", // do NOT auto-follow — we handle it ourselves
+      // We let fetch handle the redirect automatically.
+      // Modern Node.js fetch correctly changes POST to GET on 302 redirects.
     });
 
-    let finalText: string;
-
-    if (firstResponse.status === 302 || firstResponse.status === 301) {
-      // Follow the redirect with GET — doPost() already ran on the initial POST.
-      // The redirect URL (googleusercontent.com/echo) just delivers the JSON response.
-      // Re-POSTing to it returns HTML instead of JSON.
-      const redirectUrl = firstResponse.headers.get("location");
-      if (!redirectUrl) {
-        console.error("[register] Redirect with no Location header");
-        return Response.json({ success: false, error: "Redirect error." }, { status: 502 });
-      }
-
-      const secondResponse = await fetch(redirectUrl);
-      finalText = await secondResponse.text();
-    } else {
-      finalText = await firstResponse.text();
-    }
+    const finalText = await response.text();
 
     // Parse JSON — if we get HTML, the deployment settings are wrong
     let result: { success: boolean; error?: string };
