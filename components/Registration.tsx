@@ -138,17 +138,18 @@ export default function Registration() {
 
       if (result.success) {
         // Fire GTM event for registration using centralized handler
-        eventHandler({
+        await eventHandler({
           event_name: "complete_registration",
           content_name: "জাতীয় মিলাদুন্নবী অলিম্পিয়াড ২০২৬",
-          currency: "BDT",
           value: 100.00,
           event_id: eventId,
           fullName: data.fullName,
           ge: data.gender,
           ph: data.phone,
           em: data.email,
-          upazila_id: data.upazila
+          upazila_id: data.upazila,
+          ct: BdAddress.districtNameById(data.district, "en").name,
+          st: BdAddress.divisionNameById(data.division, "en").name,
         });
 
         reset();
