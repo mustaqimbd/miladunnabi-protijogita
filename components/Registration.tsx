@@ -155,9 +155,9 @@ export default function Registration() {
         reset();
         router.push("/success");
       } else {
-        setSubmitError("রেজিস্ট্রেশন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।");
+        setSubmitError(result.error || result.message || "রেজিস্ট্রেশন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।");
       }
-    } catch {
+    } catch (err) {
       setSubmitError("নেটওয়ার্ক সমস্যা। ইন্টারনেট সংযোগ যাচাই করে আবার চেষ্টা করুন।");
     } finally {
       setIsSubmitting(false);

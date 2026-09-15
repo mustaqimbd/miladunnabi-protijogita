@@ -1,4 +1,6 @@
 import crypto from "crypto";
+import dbConnect from "@/lib/mongodb";
+import Registration from "@/models/Registration";
 
 function hashData(data: string | undefined): string | undefined {
   if (!data) return undefined;
@@ -85,15 +87,6 @@ async function sendCapiEvent(body: any, request: Request) {
 }
 
 export async function POST(request: Request) {
-  const scriptUrl = process.env.GOOGLE_SHEET_URL;
-
-  if (!scriptUrl || scriptUrl.includes("YOUR_SCRIPT_ID")) {
-    return Response.json(
-      { success: false, error: "Google Sheet URL is not configured." },
-      { status: 500 }
-    );
-  }
-
   let body: any;
   try {
     body = await request.json();
@@ -104,70 +97,38 @@ export async function POST(request: Request) {
     );
   }
 
-  const sheetPayload = {
-    "পূর্ণ নাম": body.fullName,
-    "লিঙ্গ": body.gender === 'male' ? 'পুরুষ' : body.gender === 'female' ? 'নারী' : 'অন্যান্য',
-    "মোবাইল নম্বর": body.phone,
-    "WhatsApp নম্বর": body.whatsapp,
-    "ইমেইল": body.email || "N/A",
-    "বিভাগ": body.division,
-    "জেলা": body.district,
-    "উপজেলা / থানা": body.upazila,
-    "ঠিকানা": body.currentAddress,
-    "অংশগ্রহণের গ্রুপ (পরিচয়)": body.identity === 'group1' ? 'ষষ্ঠ–দশম / শহরে বেকায়া / সমমান পর্যন্ত' : 
-                               body.identity === 'group2' ? 'একাদশ–দ্বাদশ / আলিম / হেদায়া সমমান পর্যন্ত' :
-                               body.identity === 'group3' ? 'ডিগ্রি / ফাজিল / অনার্স / কামিল / মাস্টার্স / দাওরায়ে হাদিস সমমান পর্যন্ত' :
-                               body.identity === 'group4' ? 'যেকোনো পেশাজীবী / অন্যান্য' : body.identity,
-    "পেশা": body.occupation === 'student' ? 'ছাত্র / ছাত্রী' : 
-            body.occupation === 'job' ? 'চাকরিজীবী' : 
-            body.occupation === 'business' ? 'ব্যবসায়ী' : 
-            body.occupation === 'housewife' ? 'গৃহিণী' : 
-            body.occupation === 'farmer' ? 'কৃষক' : 
-            body.occupation === 'other_occ' ? 'অন্যান্য' : body.occupation,
-    "শিক্ষাপ্রতিষ্ঠান / পেশার বিবরণ": body.institution || "N/A",
-    "পেমেন্ট মাধ্যম": body.paymentMethod === 'bkash' ? 'bKash' : body.paymentMethod === 'nagad' ? 'Nagad' : body.paymentMethod,
-    "সেন্ডার নম্বর": body.senderNumber,
-    "Transaction ID": body.transactionId || "N/A",
-    "Event ID": body.eventId || "N/A",
-    "Submission Time": new Date().toLocaleString('en-US', { timeZone: 'Asia/Dhaka' })
-  };
-
-  const payload = JSON.stringify(sheetPayload);
-
   try {
-    const response = await fetch(scriptUrl, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain" },
-      body: payload,
-      // We let fetch handle the redirect automatically.
-      // Modern Node.js fetch correctly changes POST to GET on 302 redirects.
-    });
+    await dbConnect();
+    
+    // Check for existing registration to prevent duplicates
+    const queryConditions: any[] = [{ phone: body.phone }];
+    if (body.email && body.email.trim() !== "") {
+      queryConditions.push({ email: body.email.trim() });
+    }
 
-    const finalText = await response.text();
+    const existingRegistration = await Registration.findOne({ $or: queryConditions });
 
-    // Parse JSON — if we get HTML, the deployment settings are wrong
-    let result: { success: boolean; error?: string };
-    try {
-      result = JSON.parse(finalText);
-    } catch {
-      console.error("[register] Apps Script returned non-JSON:", finalText.slice(0, 400));
+    if (existingRegistration) {
       return Response.json(
-        { success: false, error: "Apps Script returned unexpected response." },
-        { status: 502 }
+        { success: false, error: "এই মোবাইল নম্বর বা ইমেইল দিয়ে ইতোমধ্যে রেজিস্ট্রেশন করা হয়েছে।" },
+        { status: 400 }
       );
     }
 
-    if (result.success && body && typeof body === "object") {
-      // Fire CAPI event asynchronously without blocking the response
+    const newRegistration = new Registration(body);
+    await newRegistration.save();
+
+    // Fire CAPI event asynchronously without blocking the response
+    if (body && typeof body === "object") {
       sendCapiEvent(body, request).catch(console.error);
     }
 
-    return Response.json(result);
+    return Response.json({ success: true, message: "Registration successful" });
   } catch (err) {
-    console.error("[register] Failed to reach Google Apps Script:", err);
+    console.error("[register] Failed to save to MongoDB:", err);
     return Response.json(
-      { success: false, error: "Failed to reach Google Sheets." },
-      { status: 502 }
+      { success: false, error: "Failed to complete registration." },
+      { status: 500 }
     );
   }
 }
