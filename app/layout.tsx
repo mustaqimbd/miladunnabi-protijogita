@@ -15,6 +15,7 @@ import { Metadata } from "next/types";
 import InitGTM from "@/tracking/init/InitGTM";
 import PageTracking from "@/tracking/init/PageTracking";
 import { Suspense } from "react";
+import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: "রেজিস্ট্রেশন | মিলাদুন্নবী প্রতিযোগিতা",
@@ -37,7 +38,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense fallback={null}>
           <PageTracking />
         </Suspense>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
