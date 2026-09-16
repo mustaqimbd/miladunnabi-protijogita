@@ -160,7 +160,7 @@ export default function RegistrationTable({ initialRegistrations }: { initialReg
                     <Phone className="w-3.5 h-3.5 text-gray-400" />
                     {reg.phone}
                   </div>
-                  {reg.whatsapp && reg.whatsapp !== reg.phone && (
+                  {reg.whatsapp && (
                     <div className="text-sm text-gray-600 mt-1 flex items-center gap-1.5 font-medium">
                       <MessageCircle className="w-4 h-4 text-green-500" />
                       {reg.whatsapp}

@@ -32,7 +32,7 @@ export default async function DashboardPage() {
 
       {/* Main Content */}
       <main className="flex-1 p-6 md:p-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[1600px] mx-auto">
           {/* Top Actions & Analytics */}
           <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-4 xl:gap-6">
