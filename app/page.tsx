@@ -1,3 +1,5 @@
+export const dynamic = 'force-static';
+
 import Header from "@/components/Header";
 import IntroSection from "@/components/IntroSection";
 import TopPrizes from "@/components/TopPrizes";

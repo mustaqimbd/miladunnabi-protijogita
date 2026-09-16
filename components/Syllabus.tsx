@@ -23,6 +23,7 @@ export default function Syllabus() {
               className="object-cover"
               sizes="192px"
               priority
+              unoptimized
             />
           </div>
 

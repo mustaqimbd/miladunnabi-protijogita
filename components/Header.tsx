@@ -11,6 +11,7 @@ export default function Header() {
           priority
           sizes="(max-width: 768px) 100vw, 800px"
           className="object-contain sm:object-cover"
+          unoptimized
         />
       </div>
     </header>

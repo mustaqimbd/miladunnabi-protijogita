@@ -16,6 +16,7 @@ export default function TopPrizes() {
             width={1200}
             height={600}
             className="w-full h-auto object-contain"
+            unoptimized
           />
         </div>
       </div>
