@@ -31,7 +31,7 @@ type RegistrationFormInputs = {
 };
 
 // Reusable Section Wrapper
-const FormSection = ({ title, icon, children }: { title: string, icon: React.ReactNode, children: React.ReactNode }) => (
+const FormSection = ({ title, icon, children }: { title: React.ReactNode, icon: React.ReactNode, children: React.ReactNode }) => (
   <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
     <div className="bg-[#0f5b3a] text-white px-5 py-3 flex items-center gap-3">
       {icon}
@@ -220,7 +220,13 @@ export default function Registration() {
                           <Phone className="h-5 w-5 text-gray-400" />
                         </div>
                         <input
-                          {...register("phone", { required: "ফোন নম্বর লিখুন" })}
+                          {...register("phone", { 
+                            required: "ফোন নম্বর লিখুন",
+                            pattern: {
+                              value: /^01[3-9]\d{8}$/,
+                              message: "সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন"
+                            }
+                          })}
                           type="tel"
                           placeholder="01XXXXXXXXX"
                           className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.phone ? 'border-red-400' : 'border-gray-300'}`}
@@ -235,7 +241,13 @@ export default function Registration() {
                           <MessageCircle className="h-5 w-5 text-green-500" />
                         </div>
                         <input
-                          {...register("whatsapp", { required: "WhatsApp নম্বর লিখুন" })}
+                          {...register("whatsapp", { 
+                            required: "WhatsApp নম্বর লিখুন",
+                            pattern: {
+                              value: /^01[3-9]\d{8}$/,
+                              message: "সঠিক ১১ ডিজিটের WhatsApp নম্বর দিন"
+                            }
+                          })}
                           type="tel"
                           placeholder="01XXXXXXXXX"
                           className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.whatsapp ? 'border-red-400' : 'border-gray-300'}`}
@@ -458,7 +470,7 @@ export default function Registration() {
               </div>
 
               {/* Payment Verification */}
-              <FormSection title="আপনি কোন মাধ্যমে পেমেন্ট করেছেন?" icon={<Wallet className="w-6 h-6" />}>
+              <FormSection title={<>আপনি কোন মাধ্যমে পেমেন্ট করেছেন? <span className="text-red-400">*</span></>} icon={<Wallet className="w-6 h-6" />}>
                 <div className="space-y-5">
                   <div className="flex gap-8">
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -479,7 +491,13 @@ export default function Registration() {
                         <Phone className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
-                        {...register("senderNumber", { required: "সেন্ডার নম্বর লিখুন" })}
+                        {...register("senderNumber", { 
+                          required: "সেন্ডার নম্বর লিখুন",
+                          pattern: {
+                            value: /^01[3-9]\d{8}$/,
+                            message: "সঠিক ১১ ডিজিটের সেন্ডার নম্বর দিন"
+                          }
+                        })}
                         type="tel"
                         placeholder="01XXXXXXXXX"
                         className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 ${errors.senderNumber ? 'border-red-400' : 'border-gray-300'}`}
@@ -489,18 +507,19 @@ export default function Registration() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold text-gray-800 mb-2">Transaction ID (ঐচ্ছিক)</label>
+                    <label className="block text-sm font-bold text-gray-800 mb-2">Transaction ID <span className="text-red-500">*</span></label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Hash className="h-5 w-5 text-gray-400" />
                       </div>
                       <input
-                        {...register("transactionId")}
+                        {...register("transactionId", { required: "Transaction ID লিখুন" })}
                         type="text"
                         placeholder="Transaction ID লিখুন"
-                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 font-mono uppercase border-gray-300`}
+                        className={`w-full pl-10 pr-4 py-2.5 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0f5b3a]/50 focus:border-[#0f5b3a] transition-all text-gray-800 font-mono uppercase ${errors.transactionId ? 'border-red-400' : 'border-gray-300'}`}
                       />
                     </div>
+                    <FieldError message={errors.transactionId?.message} />
                   </div>
                 </div>
               </FormSection>
@@ -530,7 +549,7 @@ export default function Registration() {
                   <div className="pt-4 border-t border-yellow-200">
                     <label className="flex items-start gap-3 cursor-pointer group">
                       <input type="checkbox" {...register("agreeAll", { required: "শর্তাবলিতে সম্মতি প্রদান করুন" })} className="mt-1 w-4 h-4 text-[#0f5b3a] rounded border-gray-300 focus:ring-[#0f5b3a]" />
-                      <span className="text-sm font-bold text-gray-800">আমি উপরোক্ত শর্তাবলি পড়েছি এবং একমত পোষণ করছি।</span>
+                      <span className="text-sm font-bold text-gray-800">আমি উপরোক্ত শর্তাবলি পড়েছি এবং একমত পোষণ করছি। <span className="text-red-500">*</span></span>
                     </label>
                     <FieldError message={errors.agreeAll?.message} />
                   </div>

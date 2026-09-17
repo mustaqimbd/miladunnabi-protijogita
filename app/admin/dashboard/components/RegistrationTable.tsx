@@ -215,7 +215,7 @@ export default function RegistrationTable({ initialRegistrations }: { initialReg
                   <div className="text-sm text-gray-700 font-medium mt-1">Sender: <span className="font-mono">{reg.senderNumber}</span></div>
                   <div className="text-sm text-gray-700 mt-1">TrxID: <span className="font-mono text-indigo-600 bg-indigo-50 px-1 rounded">{reg.transactionId || "N/A"}</span></div>
                   <div className="text-xs text-gray-400 mt-2">
-                    {new Date(reg.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    {new Date(reg.createdAt).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
                   </div>
                 </td>
 
