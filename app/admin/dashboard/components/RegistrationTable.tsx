@@ -136,7 +136,7 @@ export default function RegistrationTable({ initialRegistrations }: { initialReg
                 <td className="px-6 py-4">
                   <div className="flex flex-col gap-0.5 items-start">
                     <span className="text-base font-bold text-gray-700 leading-none mb-1">
-                      {startIndex + index + 1}.
+                      {filteredRegistrations.length - (startIndex + index)}.
                     </span>
                     {reg.serialNumber ? (
                       <div className="font-mono text-xs font-bold text-gray-800 bg-gray-100 px-1.5 py-0.5 rounded inline-block">
