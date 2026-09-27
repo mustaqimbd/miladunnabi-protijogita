@@ -16,7 +16,7 @@ export default function Timeline() {
           <div className="flex w-full items-end pb-2">
             <div className="flex-1 text-center">
               <div className="text-sm font-bold text-red-500 mb-1 uppercase tracking-wider">রেজিস্ট্রেশনের শেষ সময়</div>
-              <div className="text-xl font-black text-gray-800">২৬ সেপ্টেম্বর ২০২৬</div>
+              <div className="text-xl font-black text-gray-800">৫ অক্টোবর ২০২৬</div>
             </div>
             <div className="flex-1 text-center opacity-0">.</div>
             <div className="flex-1 text-center">
