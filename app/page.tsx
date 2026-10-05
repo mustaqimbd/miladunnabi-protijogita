@@ -1,5 +1,12 @@
 export const dynamic = 'force-static';
 
+export const metadata = {
+  metadataBase: new URL('https://www.bdislamichatrokafela.org'),
+  alternates: {
+    canonical: '/',
+  },
+};
+
 import Header from "@/components/Header";
 import IntroSection from "@/components/IntroSection";
 import TopPrizes from "@/components/TopPrizes";
